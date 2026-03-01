@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Fuel Racer - CodeBoss</title>
+<style>
+body{margin:0;background:#111;color:white;font-family:Arial;text-align:center}
+canvas{background:#222;display:block;margin:auto;border:3px solid lime}
+</style>
+</head>
+<body>
+
+<h1>🏎 Fuel Racer</h1>
+<p>Ok tuşları ile hareket et. Benzin kutularını topla ⛽</p>
+<canvas id="game" width="600" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let car = {x:280, y:350,width:40,height:60,fuel:100,speed:5};
+let keys = {};
+let fuelBoxes = [];
+
+document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+// Rastgele benzin kutuları oluştur
+function spawnFuelBox(){
+let x = Math.random() * (canvas.width-30);
+let y = -50;
+fuelBoxes.push({x:x,y:y,width:30,height:30});
+}
+setInterval(spawnFuelBox,2000);
+
+function update(){
+  // Araba hareket
+  if(keys["arrowleft"]) car.x -= car.speed;
+  if(keys["arrowright"]) car.x += car.speed;
+  if(keys["arrowup"]) car.y -= car.speed;
+  if(keys["arrowdown"]) car.y += car.speed;
+  
+  // Sınırlar
+  car.x = Math.max(0, Math.min(canvas.width-car.width, car.x));
+  car.y = Math.max(0, Math.min(canvas.height-car.height, car.y));
+  
+  // Benzin azalması
+  car.fuel -= 0.05;
+  
+  // Fuel kutuları düşer
+  for(let box of fuelBoxes){
+    box.y += 2;
+    if(collide(car,box)){
+      car.fuel = Math.min(100, car.fuel + 30);
+      box.collected = true;
+    }
+  }
+  fuelBoxes = fuelBoxes.filter(box => !box.collected && box.y<canvas.height);
+  
+  if(car.fuel <=0){
+    alert("Benzin bitti! Game Over!");
+    resetGame();
+  }
+}
+
+function collide(a,b){
+return a.x < b.x+b.width &&
+       a.x+a.width > b.x &&
+       a.y < b.y+b.height &&
+       a.y+a.height > b.y;
+}
+
+function draw(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+// Araba
+ctx.fillStyle="cyan";
+ctx.fillRect(car.x,car.y,car.width,car.height);
+
+// Benzin kutuları
+ctx.fillStyle="yellow";
+for(let box of fuelBoxes){
+  ctx.fillRect(box.x,box.y,box.width,box.height);
+}
+
+// Yollar (basit çizgiler)
+ctx.strokeStyle="white";
+ctx.lineWidth=4;
+for(let i=0;i<canvas.height;i+=40){
+  ctx.beginPath();
+  ctx.moveTo(canvas.width/2, i+canvas.height%40);
+  ctx.lineTo(canvas.width/2, i+20+canvas.height%40);
+  ctx.stroke();
+}
+
+// Fuel bar
+ctx.fillStyle="white";
+ctx.fillText("Benzin: "+Math.floor(car.fuel),10,20);
+}
+
+function loop(){
+update();
+draw();
+requestAnimationFrame(loop);
+}
+loop();
+
+function resetGame(){
+car={x:280, y:350,width:40,height:60,fuel:100,speed:5};
+fuelBoxes=[];
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Fight Game - CodeBoss</title>
+<style>
+body{
+margin:0;
+background:#111;
+color:white;
+font-family:Arial;
+text-align:center;
+}
+canvas{
+background:#222;
+display:block;
+margin:auto;
+border:3px solid red;
+}
+</style>
+</head>
+<body>
+
+<h1>🥊 CodeBoss Fight Game</h1>
+<p>Player: WASD + F saldırı, Enemy: Ok tuşları + L saldırı</p>
+<canvas id="game" width="800" height="400"></canvas>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let player={
+x:100,y:300,width:50,height:50,hp:100,score:0
+};
+
+let enemy={
+x:600,y:300,width:50,height:50,hp:100,score:0
+};
+
+let keys={};
+
+document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+function update(){
+  // Player hareket
+  if(keys["a"]) player.x-=5;
+  if(keys["d"]) player.x+=5;
+  if(keys["w"]) player.y-=5;
+  if(keys["s"]) player.y+=5;
+  
+  // Enemy hareket
+  if(keys["arrowleft"]) enemy.x-=5;
+  if(keys["arrowright"]) enemy.x+=5;
+  if(keys["arrowup"]) enemy.y-=5;
+  if(keys["arrowdown"]) enemy.y+=5;
+
+  // Saldırı kontrol
+  if(keys["f"]){
+    if(collide(player,enemy)) enemy.hp-=1;
+  }
+  if(keys["l"]){
+    if(collide(enemy,player)) player.hp-=1;
+  }
+
+  // Sınırlar
+  player.x=Math.max(0,Math.min(canvas.width-player.width,player.x));
+  player.y=Math.max(0,Math.min(canvas.height-player.height,player.y));
+  enemy.x=Math.max(0,Math.min(canvas.width-enemy.width,enemy.x));
+  enemy.y=Math.max(0,Math.min(canvas.height-enemy.height,enemy.y));
+}
+
+function collide(a,b){
+return a.x < b.x+b.width &&
+       a.x+a.width > b.x &&
+       a.y < b.y+b.height &&
+       a.y+a.height > b.y;
+}
+
+function draw(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+// Player
+ctx.fillStyle="cyan";
+ctx.fillRect(player.x,player.y,player.width,player.height);
+
+// Enemy
+ctx.fillStyle="red";
+ctx.fillRect(enemy.x,enemy.y,enemy.width,enemy.height);
+
+// HP bar
+ctx.fillStyle="white";
+ctx.fillText("Player HP: "+player.hp,10,20);
+ctx.fillText("Enemy HP: "+enemy.hp,600,20);
+}
+
+function loop(){
+update();
+draw();
+if(player.hp<=0){
+alert("Enemy Wins!");
+resetGame();
+}
+if(enemy.hp<=0){
+alert("Player Wins!");
+resetGame();
+}
+requestAnimationFrame(loop);
+}
+
+function resetGame(){
+player={x:100,y:300,width:50,height:50,hp:100,score:0};
+enemy={x:600,y:300,width:50,height:50,hp:100,score:0};
+}
+
+loop();
+</script>
+
+</body>
+</html>

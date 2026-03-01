@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Maze Hunter - Adjustable Speed</title>
+<style>
+body{margin:0;background:#000;color:white;text-align:center;font-family:Arial}
+canvas{background:#111;display:block;margin:auto;border:2px solid lime}
+</style>
+</head>
+<body>
+
+<h1>🧠 Maze Hunter (Adjustable Enemy Speed)</h1>
+<p>Ok tuşları ile hareket et. T tuşuna basıp hız 0.3 gibi yazabilirsin</p>
+<canvas id="game" width="600" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const tileSize = 30;
+const rows = 20;
+const cols = 20;
+
+let grid = [];
+let player = {x:1,y:1};
+let enemy = {x:18,y:18};
+let enemySpeed = 0.3; // Başlangıç hızı
+
+function generateMap(){
+for(let y=0;y<rows;y++){
+grid[y]=[];
+for(let x=0;x<cols;x++){
+grid[y][x] = Math.random() < 0.25 ? 1 : 0; // 1 = duvar
+}
+}
+grid[player.y][player.x]=0;
+grid[enemy.y][enemy.x]=0;
+}
+generateMap();
+
+document.addEventListener("keydown", e=>{
+let nx=player.x;
+let ny=player.y;
+if(e.key==="ArrowUp") ny--;
+if(e.key==="ArrowDown") ny++;
+if(e.key==="ArrowLeft") nx--;
+if(e.key==="ArrowRight") nx++;
+
+if(nx>=0 && ny>=0 && nx<cols && ny<rows && grid[ny][nx]===0){
+player.x=nx;
+player.y=ny;
+}
+
+// 🔹 T tuşu ile hız komutu
+if(e.key.toLowerCase()==="t"){
+let cmd = prompt("Komut yaz: hız 0.3");
+if(cmd && cmd.startsWith("hız")){
+let val = parseFloat(cmd.replace("hız","").trim());
+if(!isNaN(val) && val>0 && val<=1){
+enemySpeed = val;
+alert("Düşman hızı = "+enemySpeed);
+}else{
+alert("Geçersiz değer! 0-1 arası olmalı.");
+}
+}
+}
+});
+
+function heuristic(a,b){
+return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+}
+
+function astar(start,end){
+let open=[start];
+let cameFrom={};
+let gScore={};
+let fScore={};
+
+gScore[start.x+","+start.y]=0;
+fScore[start.x+","+start.y]=heuristic(start,end);
+
+while(open.length>0){
+open.sort((a,b)=>fScore[a.x+","+a.y]-fScore[b.x+","+b.y]);
+let current=open.shift();
+
+if(current.x===end.x && current.y===end.y){
+let path=[];
+let key=current.x+","+current.y;
+while(cameFrom[key]){
+let [cx,cy]=key.split(",").map(Number);
+path.unshift({x:cx,y:cy});
+key=cameFrom[key];
+}
+return path;
+}
+
+let neighbors=[
+{x:current.x+1,y:current.y},
+{x:current.x-1,y:current.y},
+{x:current.x,y:current.y+1},
+{x:current.x,y:current.y-1}
+];
+
+for(let n of neighbors){
+if(n.x<0||n.y<0||n.x>=cols||n.y>=rows) continue;
+if(grid[n.y][n.x]===1) continue;
+
+let tentative=gScore[current.x+","+current.y]+1;
+let nKey=n.x+","+n.y;
+
+if(gScore[nKey]===undefined||tentative<gScore[nKey]){
+cameFrom[nKey]=current.x+","+current.y;
+gScore[nKey]=tentative;
+fScore[nKey]=tentative+heuristic(n,end);
+if(!open.find(o=>o.x===n.x&&o.y===n.y)){
+open.push(n);
+}
+}
+}
+}
+return [];
+}
+
+function update(){
+let path=astar(enemy,player);
+if(path.length>0){
+  if(Math.random()<enemySpeed){
+    enemy=path[0];
+  }
+}
+
+if(enemy.x===player.x && enemy.y===player.y){
+alert("GAME OVER CodeBoss!");
+generateMap();
+player={x:1,y:1};
+enemy={x:18,y:18};
+}
+}
+
+function draw(){
+ctx.clearRect(0,0,600,600);
+for(let y=0;y<rows;y++){
+for(let x=0;x<cols;x++){
+if(grid[y][x]===1){
+ctx.fillStyle="gray";
+ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
+}
+}
+}
+ctx.fillStyle="cyan";
+ctx.fillRect(player.x*tileSize,player.y*tileSize,tileSize,tileSize);
+
+ctx.fillStyle="red";
+ctx.fillRect(enemy.x*tileSize,enemy.y*tileSize,tileSize,tileSize);
+
+ctx.fillStyle="white";
+ctx.fillText("Düşman hızı: "+enemySpeed,10,20);
+}
+
+function loop(){
+update();
+draw();
+requestAnimationFrame(loop);
+}
+loop();
+</script>
+
+</body>
+</html>

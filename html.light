@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CodeBoss Light Adventure</title>
+<style>
+body{margin:0;background:black;overflow:hidden;font-family:Arial;color:white;text-align:center;}
+canvas{display:block;margin:auto;border:2px solid white;}
+</style>
+</head>
+<body>
+
+<h1>💡 Light Adventure</h1>
+<p>Ok tuşları ile ışık topunu hareket ettir. R tuşu ile renk değiştir. Hedefleri yakala!</p>
+<canvas id="game" width="600" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let light = {x:300, y:200, radius:80, speed:5, color:"yellow"};
+let keys = {};
+let targets = [];
+let obstacles = [];
+
+// Rastgele hedefler
+function spawnTargets(num){
+    for(let i=0;i<num;i++){
+        targets.push({
+            x: Math.random()*(canvas.width-20)+10,
+            y: Math.random()*(canvas.height-20)+10,
+            radius: 10,
+            collected: false
+        });
+    }
+}
+spawnTargets(10);
+
+// Rastgele engeller
+function spawnObstacles(num){
+    for(let i=0;i<num;i++){
+        obstacles.push({
+            x: Math.random()*(canvas.width-40),
+            y: Math.random()*(canvas.height-40),
+            width: Math.random()*60+20,
+            height: Math.random()*20+10
+        });
+    }
+}
+spawnObstacles(8);
+
+document.addEventListener("keydown", e=>{
+    keys[e.key.toLowerCase()]=true;
+    if(e.key.toLowerCase()==="r"){
+        // renk değiştir
+        const colors = ["yellow","cyan","magenta","orange","lime"];
+        light.color = colors[Math.floor(Math.random()*colors.length)];
+    }
+});
+document.addEventListener("keyup", e=>keys[e.key.toLowerCase()]=false);
+
+function update(){
+    if(keys["arrowup"]) light.y -= light.speed;
+    if(keys["arrowdown"]) light.y += light.speed;
+    if(keys["arrowleft"]) light.x -= light.speed;
+    if(keys["arrowright"]) light.x += light.speed;
+
+    // sınırlar
+    light.x = Math.max(0, Math.min(canvas.width, light.x));
+    light.y = Math.max(0, Math.min(canvas.height, light.y));
+
+    // hedefleri toplama
+    targets.forEach(t=>{
+        let dx = light.x - t.x;
+        let dy = light.y - t.y;
+        if(Math.sqrt(dx*dx + dy*dy) < light.radius + t.radius){
+            t.collected = true;
+        }
+    });
+}
+
+function draw(){
+    // karanlık arka plan
+    ctx.fillStyle="black";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // ışık efekti
+    let gradient = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, light.radius);
+    gradient.addColorStop(0, "rgba(255,255,200,1)");
+    gradient.addColorStop(1, "rgba(0,0,0,1)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // engeller
+    ctx.fillStyle="gray";
+    obstacles.forEach(o=>{
+        ctx.fillRect(o.x,o.y,o.width,o.height);
+    });
+
+    // hedefler (sadece ışık etkisinde görünür)
+    targets.forEach(t=>{
+        if(!t.collected){
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, t.radius, 0, Math.PI*2);
+            ctx.fillStyle=light.color;
+            ctx.fill();
+        }
+    });
+
+    // ışık topu
+    ctx.beginPath();
+    ctx.arc(light.x, light.y, 10, 0, Math.PI*2);
+    ctx.fillStyle=light.color;
+    ctx.fill();
+
+    // skor
+    let score = targets.filter(t=>t.collected).length;
+    ctx.fillStyle="white";
+    ctx.fillText("Toplanan hedefler: "+score+"/"+targets.length,10,20);
+}
+
+function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+loop();
+</script>
+
+</body>
+</html>

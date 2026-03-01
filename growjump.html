@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>GrowJump - CodeBoss</title>
+<style>
+body{
+margin:0;
+background:#111;
+color:white;
+font-family:Arial;
+text-align:center;
+}
+canvas{
+background:#222;
+display:block;
+margin:auto;
+border:3px solid cyan;
+}
+</style>
+</head>
+<body>
+
+<h1>📦 GrowJump</h1>
+<p>Space bas veya ekrana dokun!</p>
+<canvas id="game" width="800" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let ground = 350;
+
+let player = {
+x:380,
+y:300,
+size:40,
+velocityY:0,
+gravity:0.8,
+jumpPower:15,
+onGround:true,
+score:0
+};
+
+let keys = {};
+
+document.addEventListener("keydown", e => keys[e.code] = true);
+document.addEventListener("keyup", e => keys[e.code] = false);
+canvas.addEventListener("touchstart", () => jump());
+
+function jump(){
+if(player.onGround){
+player.velocityY = -player.jumpPower;
+player.onGround = false;
+player.size += 5; // her zıplamada büyü
+player.score += 1;
+}
+}
+
+function update(){
+if(keys["Space"]) jump();
+
+player.velocityY += player.gravity;
+player.y += player.velocityY;
+
+if(player.y + player.size >= ground){
+player.y = ground - player.size;
+player.velocityY = 0;
+player.onGround = true;
+}
+
+// Çok büyürse oyun zorlaşsın
+if(player.size > 200){
+player.jumpPower = 10;
+}
+}
+
+function draw(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+// Kutu
+ctx.fillStyle="cyan";
+ctx.fillRect(player.x,player.y,player.size,player.size);
+
+// Zemin
+ctx.fillStyle="gray";
+ctx.fillRect(0,ground,canvas.width,50);
+
+// Bilgiler
+ctx.fillStyle="white";
+ctx.fillText("Boyut: " + player.size, 10, 20);
+ctx.fillText("Skor: " + player.score, 10, 40);
+}
+
+function loop(){
+update();
+draw();
+requestAnimationFrame(loop);
+}
+loop();
+</script>
+
+</body>
+</html>
